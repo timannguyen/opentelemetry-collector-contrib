@@ -109,13 +109,17 @@ func (c Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
 }
 
 // parseFunc a parseFunc determines how the raw input is to be parsed into a syslog message
-type parseFunc func(input []byte) (sl.Message, error)
+type parseFunc func(input []byte) ([]sl.Message, error)
 
 func (s *Parser) buildParseFunc() (parseFunc, error) {
 	switch s.protocol {
 	case RFC3164:
-		return func(input []byte) (sl.Message, error) {
-			return rfc3164.NewMachine(rfc3164.WithLocaleTimezone(s.location)).Parse(input)
+		return func(input []byte) ([]sl.Message, error) {
+			msg, err := rfc3164.NewMachine(rfc3164.WithLocaleTimezone(s.location)).Parse(input)
+			if err != nil {
+				return nil, err
+			}
+			return []sl.Message{msg}, nil
 		}, nil
 	case RFC5424:
 		switch {
@@ -129,8 +133,12 @@ func (s *Parser) buildParseFunc() (parseFunc, error) {
 			return newNonTransparentFramingParseFunc(nontransparent.NUL), nil
 		// Raw RFC5424 parsing
 		default:
-			return func(input []byte) (sl.Message, error) {
-				return rfc5424.NewMachine().Parse(input)
+			return func(input []byte) ([]sl.Message, error) {
+				msg, err := rfc5424.NewMachine().Parse(input)
+				if err != nil {
+					return nil, err
+				}
+				return []sl.Message{msg}, nil
 			}, nil
 		}
 
@@ -150,7 +158,7 @@ type Parser struct {
 
 // Process will parse an entry field as syslog.
 func (s *Parser) Process(ctx context.Context, entry *entry.Entry) error {
-	return s.ParserOperator.ProcessWithCallback(ctx, entry, s.parse, postprocess)
+	return s.ParserOperator.ProcessWithCallback(ctx, entry, s.parse, postprocess, s.ParserOperator.WriteWithMultiEvents)
 }
 
 // parse will parse a value as syslog.
@@ -165,19 +173,31 @@ func (s *Parser) parse(value interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	slog, err := pFunc(bytes)
+	slogs, err := pFunc(bytes)
 	if err != nil {
 		return nil, err
 	}
-
-	switch message := slog.(type) {
-	case *rfc3164.SyslogMessage:
-		return s.parseRFC3164(message)
-	case *rfc5424.SyslogMessage:
-		return s.parseRFC5424(message)
-	default:
-		return nil, fmt.Errorf("parsed value was not rfc3164 or rfc5424 compliant")
+	slogsLen := len(slogs)
+	fieldList := make([]map[string]interface{}, slogsLen)
+	for i := 0; i < slogsLen; i++ {
+		switch message := slogs[i].(type) {
+		case *rfc3164.SyslogMessage:
+			f, err := s.parseRFC3164(message)
+			if err != nil {
+				return nil, err
+			}
+			fieldList[i] = f
+		case *rfc5424.SyslogMessage:
+			f, err := s.parseRFC5424(message)
+			if err != nil {
+				return nil, err
+			}
+			fieldList[i] = f
+		default:
+			return nil, fmt.Errorf("parsed value was not rfc3164 or rfc5424 compliant")
+		}
 	}
+	return fieldList, nil
 }
 
 // parseRFC3164 will parse an RFC3164 syslog message.
@@ -312,9 +332,12 @@ func postprocess(e *entry.Entry) error {
 }
 
 func newOctetCountingParseFunc() parseFunc {
-	return func(input []byte) (message sl.Message, err error) {
+	return func(input []byte) (messages []sl.Message, err error) {
+		messages = make([]sl.Message, 0)
 		listener := func(res *sl.Result) {
-			message = res.Message
+			if res.Error == nil {
+				messages = append(messages, res.Message)
+			}
 			err = res.Error
 		}
 		parser := octetcounting.NewParser(sl.WithBestEffort(), sl.WithListener(listener))
@@ -325,12 +348,14 @@ func newOctetCountingParseFunc() parseFunc {
 }
 
 func newNonTransparentFramingParseFunc(trailerType nontransparent.TrailerType) parseFunc {
-	return func(input []byte) (message sl.Message, err error) {
+	return func(input []byte) (messages []sl.Message, err error) {
+		messages = make([]sl.Message, 0)
 		listener := func(res *sl.Result) {
-			message = res.Message
+			if res.Error == nil {
+				messages = append(messages, res.Message)
+			}
 			err = res.Error
 		}
-
 		parser := nontransparent.NewParser(sl.WithBestEffort(), nontransparent.WithTrailer(trailerType), sl.WithListener(listener))
 		reader := bytes.NewReader(input)
 		parser.Parse(reader)
