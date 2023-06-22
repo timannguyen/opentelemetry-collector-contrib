@@ -15,7 +15,7 @@ type Case struct {
 	Name   string
 	Config *Config
 	Input  *entry.Entry
-	Expect *entry.Entry
+	Expect []*entry.Entry
 
 	// These signal if a test is valid for UDP and/or TCP protocol
 	ValidForTCP bool
@@ -67,7 +67,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute(), ts.Second(), 0, location["utc"]),
 				Severity:     entry.Error2,
 				SeverityText: "crit",
@@ -79,7 +79,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"priority": 34,
 				},
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
-			},
+			}},
 			true,
 			true,
 		},
@@ -94,7 +94,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute(), ts.Second(), 0, location["detroit"]),
 				Severity:     entry.Error2,
 				SeverityText: "crit",
@@ -106,7 +106,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"priority": 34,
 				},
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
-			},
+			}},
 			true,
 			true,
 		},
@@ -121,7 +121,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute(), ts.Second(), 0, location["athens"]),
 				Severity:     entry.Error2,
 				SeverityText: "crit",
@@ -133,7 +133,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"priority": 34,
 				},
 				Body: fmt.Sprintf("<34>%s 1.2.3.4 apache_server: test message", ts.Format("Jan _2 15:04:05")),
-			},
+			}},
 			true,
 			true,
 		},
@@ -147,7 +147,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: `<86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(2015, 8, 5, 21, 58, 59, 693000000, time.UTC),
 				Severity:     entry.Info,
 				SeverityText: "info",
@@ -170,7 +170,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"version": 1,
 				},
 				Body: `<86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
-			},
+			}},
 			true,
 			true,
 		},
@@ -185,7 +185,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: `215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(2015, 8, 5, 21, 58, 59, 693000000, time.UTC),
 				Severity:     entry.Info,
 				SeverityText: "info",
@@ -208,7 +208,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"version": 1,
 				},
 				Body: `215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
-			},
+			}},
 			true,
 			false,
 		},
@@ -221,12 +221,12 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 				return cfg
 			}(),
 			&entry.Entry{
-				Body: `215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile` +
-					`215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile` +
-					`215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
+				Body: `215 <86>1 2015-08-05T21:57:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile` +
+					`215 <86>2 2015-08-05T21:58:59.693Z 192.168.2.133 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.133" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile` +
+					`215 <86>3 2015-08-05T21:59:59.693Z 192.168.2.134 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.134" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
 			},
-			&entry.Entry{
-				Timestamp:    time.Date(2015, 8, 5, 21, 58, 59, 693000000, time.UTC),
+			[]*entry.Entry{{
+				Timestamp:    time.Date(2015, 8, 5, 21, 57, 59, 693000000, time.UTC),
 				Severity:     entry.Info,
 				SeverityText: "info",
 				Attributes: map[string]interface{}{
@@ -247,7 +247,53 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					},
 					"version": 1,
 				},
-				Body: `215 <86>1 2015-08-05T21:58:59.693Z 192.168.2.132 SecureAuth0 23108 ID52020 [SecureAuth@27389 UserHostAddress="192.168.2.132" Realm="SecureAuth0" UserID="Tester2" PEN="27389"] Found the user for retrieving user's profile`,
+			},
+				{
+					Timestamp:    time.Date(2015, 8, 5, 21, 58, 59, 693000000, time.UTC),
+					Severity:     entry.Info,
+					SeverityText: "info",
+					Attributes: map[string]interface{}{
+						"appname":  "SecureAuth0",
+						"facility": 10,
+						"hostname": "192.168.2.133",
+						"message":  "Found the user for retrieving user's profile",
+						"msg_id":   "ID52020",
+						"priority": 86,
+						"proc_id":  "23108",
+						"structured_data": map[string]map[string]string{
+							"SecureAuth@27389": {
+								"PEN":             "27389",
+								"Realm":           "SecureAuth0",
+								"UserHostAddress": "192.168.2.133",
+								"UserID":          "Tester2",
+							},
+						},
+						"version": 2,
+					},
+				},
+				{
+					Timestamp:    time.Date(2015, 8, 5, 21, 59, 59, 693000000, time.UTC),
+					Severity:     entry.Info,
+					SeverityText: "info",
+					Attributes: map[string]interface{}{
+						"appname":  "SecureAuth0",
+						"facility": 10,
+						"hostname": "192.168.2.134",
+						"message":  "Found the user for retrieving user's profile",
+						"msg_id":   "ID52020",
+						"priority": 86,
+						"proc_id":  "23108",
+						"structured_data": map[string]map[string]string{
+							"SecureAuth@27389": {
+								"PEN":             "27389",
+								"Realm":           "SecureAuth0",
+								"UserHostAddress": "192.168.2.134",
+								"UserID":          "Tester2",
+							},
+						},
+						"version": 3,
+					},
+				},
 			},
 			true,
 			false,
@@ -263,7 +309,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 			&entry.Entry{
 				Body: nonTransparentBody,
 			},
-			&entry.Entry{
+			[]*entry.Entry{{
 				Timestamp:    time.Date(2015, 8, 5, 21, 58, 59, 693000000, time.UTC),
 				Severity:     entry.Info,
 				SeverityText: "info",
@@ -286,7 +332,7 @@ func CreateCases(basicConfig func() *Config) ([]Case, error) {
 					"version": 1,
 				},
 				Body: nonTransparentBody,
-			},
+			}},
 			true,
 			false,
 		},

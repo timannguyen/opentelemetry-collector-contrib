@@ -40,13 +40,16 @@ func TestParser(t *testing.T) {
 			err = op.Process(context.Background(), newEntry)
 			require.NoError(t, err)
 
-			select {
-			case e := <-fake.Received:
-				require.Equal(t, ots, e.ObservedTimestamp)
-				require.Equal(t, tc.Expect, newEntry)
-			case <-time.After(time.Second):
-				require.FailNow(t, "Timed out waiting for entry to be processed")
+			for _, expectedEntry := range tc.Expect {
+				select {
+				case e := <-fake.Received:
+					require.Equal(t, ots, e.ObservedTimestamp)
+					require.Equal(t, expectedEntry, e)
+				case <-time.After(time.Second):
+					require.FailNow(t, "Timed out waiting for entry to be processed")
+				}
 			}
+
 		})
 	}
 }

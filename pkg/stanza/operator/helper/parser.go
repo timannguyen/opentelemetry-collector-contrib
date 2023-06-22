@@ -236,7 +236,8 @@ func (p *ParserOperator) ParseWithMulti(ctx context.Context, e *entry.Entry, par
 	} else {
 		for i := 0; i < newValuesLen; i++ {
 			newEntry = entry.New()
-			// TODO: how do you make sure to linebreak the body
+			newEntry.ObservedTimestamp = e.ObservedTimestamp
+			// intentionally not passing on body as it could max log size
 			if err = p.postParseFunction(ctx, newEntry, newValues.([]map[string]interface{})[i]); err != nil {
 				return nil, err
 			}
