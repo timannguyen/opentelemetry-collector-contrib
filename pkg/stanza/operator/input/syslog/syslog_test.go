@@ -77,15 +77,17 @@ func InputTest(t *testing.T, cfg *Config, tc syslog.Case) {
 	defer func() {
 		require.NoError(t, p.Stop())
 	}()
-	select {
-	case e := <-fake.Received:
-		// close pipeline to avoid data race
-		ots := time.Now()
-		e.ObservedTimestamp = ots
-		tc.Expect.ObservedTimestamp = ots
-		require.Equal(t, tc.Expect, e)
-	case <-time.After(time.Second):
-		require.FailNow(t, "Timed out waiting for entry to be processed")
+	for _, expectedEntry := range tc.Expect {
+		select {
+		case e := <-fake.Received:
+			// close pipeline to avoid data race
+			ots := time.Now()
+			e.ObservedTimestamp = ots
+			expectedEntry.ObservedTimestamp = ots
+			require.Equal(t, expectedEntry, e)
+		case <-time.After(time.Second):
+			require.FailNow(t, "Timed out waiting for entry to be processed")
+		}
 	}
 }
 
